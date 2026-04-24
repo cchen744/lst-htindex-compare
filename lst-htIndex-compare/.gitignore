@@ -1,0 +1,6 @@
+client_secret_*.json
+credentials.json
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+outputs/
