@@ -99,15 +99,28 @@ grid = jja_mean.sampleRectangle(
 
 ## File Structure
 lst-htindex-compare/
-├── README.md
-├── lst_pipeline.py          # Production pipeline
-├── LST_analysis.ipynb       # Demo notebook
-├── outputs/
-│   ├── Miami/
-│   │   ├── Miami_statistics.csv
-│   │   └── [visualizations]
-│   └── Phoenix/
-└── .gitignore
+├── README.md 
+├── requirements.txt
+├── 
+├── lst-analysis/
+│   ├── lst_pipeline.py
+│   ├── LST_analysis.ipynb
+│   └── outputs/
+│       ├── Miami_statistics.csv
+│       └── Phoenix_statistics.csv
+│
+├── heat-index-analysis/
+│   ├── notebooks/
+│   │   └── 01_two_city_lst_hi_workflow.ipynb
+│   ├── figures/
+│   └── data/
+│       └── processed/
+│           ├── official_city_summary_stats.csv
+│           └── official_hotspot_overlap_metrics.csv
+│
+└── comparison/
+    ├── LST_vs_HI_comparison.ipynb
+    └── figures/
 
 ## Human Living Environment Perspective
 
