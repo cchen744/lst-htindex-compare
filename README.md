@@ -134,8 +134,6 @@ Future HTIndex work will make the human component explicit by directly assessing
 
 ## References
 
-Main project: [Urban Heat Island Response to Extreme Heat Events](https://github.com/cchen744/uhi-extreme-heat-response)
-
 MODIS LST: [MOD11A1 Documentation](https://lpdaac.usgs.gov/products/mod11a1v006/)
 
 Moran's I: [Spatial Autocorrelation](https://en.wikipedia.org/wiki/Moran%27s_I)
