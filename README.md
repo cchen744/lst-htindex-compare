@@ -98,6 +98,7 @@ grid = jja_mean.sampleRectangle(
 ```
 
 ## File Structure
+```
 lst-htindex-compare/
 ├── README.md 
 ├── requirements.txt
@@ -121,7 +122,7 @@ lst-htindex-compare/
 └── comparison/
     ├── LST_vs_HI_comparison.ipynb
     └── figures/
-
+```
 ## Human Living Environment Perspective
 
 Rather than treating LST as abstract surface temperature, this project frames it in terms of **human thermal exposure**:
