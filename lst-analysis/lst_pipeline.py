@@ -167,6 +167,33 @@ class LSTVisualizer:
         task.start()
         print(f"Exporting {config.city_name} JJA LST to Google Drive...")
         return task
+    @staticmethod
+    def export_html_map(image, config):
+        """Export interactive HTML map to Google Drive"""
+        import geemap
+        
+        geom = config.create_geom()
+        
+        # Create folium map
+        m = geemap.Map(center=(config.city_bounds[1], config.city_bounds[0]), zoom=10)
+        
+        # Add LST layer (convert to Celsius)
+        lst_celsius = image.multiply(0.02).subtract(273.15)
+        
+        m.addLayer(
+            lst_celsius,
+            {'min': 20, 'max': 45, 'palette': ['blue', 'cyan', 'yellow', 'red']},
+            name=f'{config.city_name} LST'
+        )
+        m.addLayerControl()
+        
+        # Save to Google Drive
+        geemap.ee_export_image(
+            image=lst_celsius,
+            filename=f'{config.city_name}_JJA_LST.html',
+            crs='EPSG:4326'
+        )
+        print(f"Exporting {config.city_name} map to Google Drive...")
 
     @staticmethod
     def create_hotspot_map(geotiff_path, city_name, output_html, city_center):
