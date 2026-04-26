@@ -312,10 +312,9 @@ class JJALSTPipeline:
 
         # Step 3: Export GeoTIFF for visualization
         if export_geotiff:
-            print("Step 3: Exporting GeoTIFF...")
+            print("Step 3: Exporting maps...")
             jja_mean = self._compute_jja_mean(jja_data_gee)
-            task = self.visualizer.export_to_geotiff(jja_mean, self.config)
-            self.results['export_task'] = task
+            self.visualizer.export_html_map(jja_mean, self.config)
             print("  → Download from Google Drive when ready")
 
         # Step 4: Export statistics
