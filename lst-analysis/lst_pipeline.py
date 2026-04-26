@@ -103,7 +103,7 @@ class GEELSTFetcher:
         """QA filtering for MOD11A1: keep quality 0 and 1 and 2"""
         qa = image.select(config.qa_band)
         good_quality = qa.lte(2)  
-        return image.select(config.lst_band).updateMask(good_quality)
+        return image.select(config.lst_band) #.updateMask(good_quality)
 
 
 # ============================================================================
