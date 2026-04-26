@@ -100,9 +100,9 @@ class GEELSTFetcher:
 
     @staticmethod
     def _qa_filter(image, config):
-        """QA filtering for MOD11A1: keep quality 0 and 1"""
+        """QA filtering for MOD11A1: keep quality 0 and 1 and 2"""
         qa = image.select(config.qa_band)
-        good_quality = qa.lte(1)  # 0=good, 1=marginal
+        good_quality = qa.lte(2)  
         return image.select(config.lst_band).updateMask(good_quality)
 
 
