@@ -167,6 +167,7 @@ class LSTVisualizer:
         task.start()
         print(f"Exporting {config.city_name} JJA LST to Google Drive...")
         return task
+        
     @staticmethod
     def export_html_map(image, config):
         """Export interactive HTML map to Google Drive"""
@@ -314,7 +315,8 @@ class JJALSTPipeline:
         if export_geotiff:
             print("Step 3: Exporting maps...")
             jja_mean = self._compute_jja_mean(jja_data_gee)
-            self.visualizer.export_html_map(jja_mean, self.config)
+            task = self.visualizer.export_to_geotiff(jja_mean, self.config)
+            self.results['export_task'] = task
             print("  → Download from Google Drive when ready")
 
         # Step 4: Export statistics
