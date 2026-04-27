@@ -1,0 +1,11 @@
+city,category,count,pct_of_total,pct_of_valid
+Houston,Overlap hotspot,44,6.7,8.0
+Houston,LST-only hotspot,66,10.1,12.0
+Houston,HI-only hotspot,96,14.7,17.5
+Houston,Neither,343,52.4,62.5
+Houston,Missing,105,16.1,
+Phoenix,Overlap hotspot,30,8.0,9.0
+Phoenix,LST-only hotspot,37,9.9,11.1
+Phoenix,HI-only hotspot,43,11.5,13.0
+Phoenix,Neither,222,59.5,66.9
+Phoenix,Missing,41,11.0,
