@@ -50,10 +50,35 @@ class LSTConfig:
         self.lst_band = 'LST_Day_1km'
         self.qa_band = 'QC_Day'
 
-    def create_geom(self):
-        """Create GEE geometry from bounds"""
+def create_geom(self):
+    """Create GEE geometry from bounds or Census Tract"""
+    if hasattr(self, 'use_census_tract') and self.use_census_tract:
+        # 从 TIGER 获取 Census Tract
+        preset = CITY_PRESETS[self.city_name]
+        state_code = preset['state_code']
+        county = preset['county']
+        
+        # get all Census Tract from TIGER/2020/TRACTS of one county
+        tracts = ee.FeatureCollection('TIGER/2020/TRACTS').filter(
+            ee.Filter.eq('STATEFP', ee.Number.parse(self._state_fips(state_code)))
+        ).filter(
+            ee.Filter.stringContains('NAME', county)
+        )
+        
+        # return combined geometry
+        return tracts.geometry()
+    else:
+        # The original approach of city boundary
         min_lon, min_lat, max_lon, max_lat = self.city_bounds
         return ee.Geometry.Rectangle([min_lon, min_lat, max_lon, max_lat])
+
+@staticmethod
+def _state_fips(state_code):
+    """State code to FIPS"""
+    state_fips_map = {
+        'FL': '12', 'AZ': '04', 'TX': '48'
+    }
+    return state_fips_map.get(state_code, '00')
 
 
 # ============================================================================
@@ -381,22 +406,37 @@ class JJALSTPipeline:
 CITY_PRESETS = {
     'Miami': {
         'bounds': [-80.3, 25.7, -80.1, 25.9],
-        'center': [25.8, -80.2]
+        'center': [25.8, -80.2],
+        'state': 'Florida',
+        'state_code': 'FL',
+        'county': 'Miami-Dade'
     },
     'Phoenix': {
         'bounds': [-112.15, 33.35, -112.0, 33.5],
-        'center': [33.425, -112.075]
+        'center': [33.425, -112.075],
+        'state': 'Arizona',
+        'state_code': 'AZ',
+        'county': 'Maricopa'
+    },
+    'Houston': {
+        'bounds': [-95.7, 29.4, -95.0, 30.1],
+        'center': [29.76, -95.37],
+        'state': 'Texas',
+        'state_code': 'TX',
+        'county': 'Harris'
     }
 }
 
 
-def create_config(city_name, start_year=2020, end_year=2024, output_dir='./outputs'):
-    """Create config from city preset"""
+def create_config(city_name, season='JJA', start_year=2020, end_year=2024, 
+                  use_census_tract=True, output_dir='./outputs'):
     if city_name not in CITY_PRESETS:
         raise ValueError(f"City {city_name} not in presets. Available: {list(CITY_PRESETS.keys())}")
-
+    
     bounds = CITY_PRESETS[city_name]['bounds']
-    return LSTConfig(city_name, bounds, start_year, end_year, output_dir)
+    config = LSTConfig(city_name, bounds, season, start_year, end_year, output_dir)
+    config.use_census_tract = use_census_tract
+    return config
 
 
 # ============================================================================
