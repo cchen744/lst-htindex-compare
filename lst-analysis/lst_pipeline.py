@@ -29,24 +29,26 @@ except ImportError:
 class LSTConfig:
     """Configuration for JJA LST analysis"""
 
-    def __init__(self, city_name, city_bounds, start_year=2020, end_year=2024, output_dir='./outputs'):
+    def __init__(self, city_name, city_bounds, season='JJA', start_year=2020, end_year=2024, output_dir='./outputs'):
         """
         Args:
             city_name (str): Name of city
             city_bounds (list): [min_lon, min_lat, max_lon, max_lat]
+            season (str): Season code ('DJF', 'MAM', 'JJA', 'SON')
             start_year (int): Start year (default 2020)
             end_year (int): End year (default 2024, inclusive)
             output_dir (str): Output directory path
         """
         self.city_name = city_name
         self.city_bounds = city_bounds
+        self.season = season
         self.start_year = start_year
         self.end_year = end_year
         self.output_dir = Path(output_dir) / city_name
         self.output_dir.mkdir(parents=True, exist_ok=True)
-
+    
         # MODIS settings
-        self.modis_product = 'MODIS/061/MOD11A1'  # Terra daytime LST
+        self.modis_product = 'MODIS/061/MOD11A1'
         self.lst_band = 'LST_Day_1km'
         self.qa_band = 'QC_Day'
 
