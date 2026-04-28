@@ -53,34 +53,11 @@ class LSTConfig:
         self.qa_band = 'QC_Day'
 
     def create_geom(self):
-        """Create GEE geometry from bounds or Census Tract"""
-        if hasattr(self, 'use_census_tract') and self.use_census_tract:
-            # Get Census Tract from TIGER 
-            preset = CITY_PRESETS[self.city_name]
-            state_code = preset['state_code']
-            county = preset['county']
-            
-            # get all Census Tract from TIGER/2020/TRACTS of one county
-            tracts = ee.FeatureCollection('TIGER/2020/TRACTS').filter(
-                ee.Filter.eq('STATEFP', ee.Number.parse(self._state_fips(state_code)))
-            ).filter(
-                ee.Filter.stringContains('NAME', county)
-            )
-            
-            # return combined geometry
-            return tracts.geometry()
+        if hasattr(self, 'census_geom') and self.use_census_tract:
+            return ee.Geometry(self.census_geom.__geo_interface__)
         else:
-            # The original approach of city boundary
             min_lon, min_lat, max_lon, max_lat = self.city_bounds
             return ee.Geometry.Rectangle([min_lon, min_lat, max_lon, max_lat])
-    
-    @staticmethod
-    def _state_fips(state_code):
-        """State code to FIPS"""
-        state_fips_map = {
-            'FL': '12', 'AZ': '04', 'TX': '48'
-        }
-        return state_fips_map.get(state_code, '00')
 
 
 # ============================================================================
@@ -224,42 +201,51 @@ class LSTVisualizer:
         print(f"Exporting {config.city_name} map to Google Drive...")
 
     @staticmethod
-    def create_hotspot_map(geotiff_path, city_name, output_html, city_center):
-        """
-        Create interactive Folium map with hotspots
-
-        Args:
-            geotiff_path: Path to downloaded GeoTIFF
-            city_name: Name of city
-            output_html: Output HTML path
-            city_center: [lat, lon]
-        """
-        if not HAS_VIZ:
-            print("Install rasterio and folium for map visualization")
-            return
-
-        # Read GeoTIFF
+    def create_hotspot_map(geotiff_path, city_name, output_html, city_center, census_geom=None):
+        """Create interactive Folium map with hotspots, masked to Census Tract"""
+        import rasterio
+        from rasterio.mask import mask as raster_mask
+        
         with rasterio.open(geotiff_path) as src:
-            data = src.read(1)
-            bounds = src.bounds
+            # if we have census tract data
+            if census_geom is not None:
+                try:
+                    # census_geom is shapely geometry，should be transformed to table
+                    geom_list = [census_geom.__geo_interface__]
+                    masked_array, masked_transform = raster_mask(src, geom_list, crop=True)
+                    data = masked_array[0]
+                    
+                    # get new boundary from transform
+                    height, width = data.shape
+                    left = masked_transform.c
+                    top = masked_transform.f
+                    right = left + masked_transform.a * width
+                    bottom = top + masked_transform.e * height
+                    bounds_tuple = (left, bottom, right, top)
+                    
+                    print(f"Masked to Census Tract: {bounds_tuple}")
+                except Exception as e:
+                    print(f"Mask failed ({e}), using original")
+                    data = src.read(1)
+                    bounds_tuple = src.bounds
+            else:
+                data = src.read(1)
+                bounds_tuple = src.bounds
 
         # Identify hotspots
-        threshold = np.nanpercentile(data, 75)
+        threshold = np.nanpercentile(data, 90)
         hotspot_mask = (data > threshold).astype(float)
 
-        # Normalize data for coloring
         norm_lst = Normalize(vmin=np.nanpercentile(data, 2),
-                             vmax=np.nanpercentile(data, 98))
+                            vmax=np.nanpercentile(data, 98))
         norm_hotspot = Normalize(vmin=0, vmax=1)
 
         cmap_lst = cm.get_cmap('RdYlBu_r')
         cmap_hotspot = cm.get_cmap('Reds')
 
-        # Convert to RGB images
         lst_rgb = cmap_lst(norm_lst(data))
         hotspot_rgb = cmap_hotspot(norm_hotspot(hotspot_mask))
 
-        # Save as PNG
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             lst_png = f'{tmpdir}/lst.png'
@@ -268,32 +254,31 @@ class LSTVisualizer:
             plt.imsave(lst_png, lst_rgb)
             plt.imsave(hotspot_png, hotspot_rgb)
 
-            # Create Folium map
             m = folium.Map(
                 location=city_center,
                 zoom_start=11,
                 tiles='CartoDB positron'
             )
 
-            # Add LST layer
+            # bounds format: (left, bottom, right, top) -> folium needs [[bottom, left], [top, right]]
+            folium_bounds = [[bounds_tuple[1], bounds_tuple[0]], [bounds_tuple[3], bounds_tuple[2]]]
+            
             folium.raster_layers.ImageOverlay(
                 image=lst_png,
-                bounds=[[bounds.bottom, bounds.left], [bounds.top, bounds.right]],
-                opacity=0.7,
+                bounds=folium_bounds,
+                opacity=0.8,
                 name='LST (°C)',
                 show=True
             ).add_to(m)
 
-            # Add hotspot overlay
             folium.raster_layers.ImageOverlay(
                 image=hotspot_png,
-                bounds=[[bounds.bottom, bounds.left], [bounds.top, bounds.right]],
-                opacity=0.4,
-                name='Hotspots (>75th percentile)',
-                show=False
+                bounds=folium_bounds,
+                opacity=0.5,
+                name='Hotspots (>90th percentile)',
+                show=True
             ).add_to(m)
 
-            # Add layer control
             folium.LayerControl().add_to(m)
 
             m.save(output_html)
