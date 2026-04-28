@@ -52,35 +52,35 @@ class LSTConfig:
         self.lst_band = 'LST_Day_1km'
         self.qa_band = 'QC_Day'
 
-def create_geom(self):
-    """Create GEE geometry from bounds or Census Tract"""
-    if hasattr(self, 'use_census_tract') and self.use_census_tract:
-        # 从 TIGER 获取 Census Tract
-        preset = CITY_PRESETS[self.city_name]
-        state_code = preset['state_code']
-        county = preset['county']
-        
-        # get all Census Tract from TIGER/2020/TRACTS of one county
-        tracts = ee.FeatureCollection('TIGER/2020/TRACTS').filter(
-            ee.Filter.eq('STATEFP', ee.Number.parse(self._state_fips(state_code)))
-        ).filter(
-            ee.Filter.stringContains('NAME', county)
-        )
-        
-        # return combined geometry
-        return tracts.geometry()
-    else:
-        # The original approach of city boundary
-        min_lon, min_lat, max_lon, max_lat = self.city_bounds
-        return ee.Geometry.Rectangle([min_lon, min_lat, max_lon, max_lat])
-
-@staticmethod
-def _state_fips(state_code):
-    """State code to FIPS"""
-    state_fips_map = {
-        'FL': '12', 'AZ': '04', 'TX': '48'
-    }
-    return state_fips_map.get(state_code, '00')
+    def create_geom(self):
+        """Create GEE geometry from bounds or Census Tract"""
+        if hasattr(self, 'use_census_tract') and self.use_census_tract:
+            # Get Census Tract from TIGER 
+            preset = CITY_PRESETS[self.city_name]
+            state_code = preset['state_code']
+            county = preset['county']
+            
+            # get all Census Tract from TIGER/2020/TRACTS of one county
+            tracts = ee.FeatureCollection('TIGER/2020/TRACTS').filter(
+                ee.Filter.eq('STATEFP', ee.Number.parse(self._state_fips(state_code)))
+            ).filter(
+                ee.Filter.stringContains('NAME', county)
+            )
+            
+            # return combined geometry
+            return tracts.geometry()
+        else:
+            # The original approach of city boundary
+            min_lon, min_lat, max_lon, max_lat = self.city_bounds
+            return ee.Geometry.Rectangle([min_lon, min_lat, max_lon, max_lat])
+    
+    @staticmethod
+    def _state_fips(state_code):
+        """State code to FIPS"""
+        state_fips_map = {
+            'FL': '12', 'AZ': '04', 'TX': '48'
+        }
+        return state_fips_map.get(state_code, '00')
 
 
 # ============================================================================
